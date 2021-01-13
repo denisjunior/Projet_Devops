@@ -7,7 +7,7 @@ jobs:
     steps: 
       - checkout
       - 
-        restore_cahce: 
+        restore_cache: 
           key: "deps-{{ checksum \"requirements/dev.txt\"}}-{{ .Environment.CACHE_VERSION}}"
       - 
         run: 
