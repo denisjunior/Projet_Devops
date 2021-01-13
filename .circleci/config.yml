@@ -1,0 +1,13 @@
+version: 2
+jobs:
+ build:
+  docker:
+   - image: circleci/python:3.6
+    auth:
+     username: mydockerhub_user
+     password: DOCKERHUB_PASS
+  steps:
+   - checkout
+   - run: pip install -r requirements/dev.txt
+  
+
