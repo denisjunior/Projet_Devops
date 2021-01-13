@@ -8,14 +8,17 @@ jobs:
       - checkout
       - 
         restore_cache: 
-          key: "deps-{{ checksum \"requirements/dev.txt\"}}-{{ .Environment.CACHE_VERSION}}"
+          key: "deps1-{{ .Branch }}-{{ checksum \"requirements/dev.txt\" }}"
       - 
         run: 
-          command: "python3 -m venv venv . venv/bin/active pip install -r requirements/dev.txt"
-          name: "Installation des dépendances python"
+          command: |
+              python3 -m venv venv
+              . venv/bin/activate
+              pip install -r requirements/dev.txt
+          name: "Install Python deps in a venv"
       - 
         save_cache: 
-          key: "deps-{{ checksum \"requirements/dev.txt\"}}-{{ .Environment.CACHE_VERSION }}"
+          key: "deps1-{{ .Branch }}-{{ checksum \"requirements/dev.txt\" }}"
           paths: 
             - venv
   flask_tests: 
