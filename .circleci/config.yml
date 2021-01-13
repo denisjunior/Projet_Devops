@@ -1,12 +1,52 @@
 version: 2
+workflows:
+ test:
+  jobs:
+   - build
+   - flask_tests:
+     requires:
+      - build
 jobs:
  build:
   docker:
     - image: circleci/python:3.6
   steps:
     - checkout
-    - run: pip install -r requirements/dev.txt
+    - restore_cahce:
+      key: deps-{{ checksum "requirements/dev.txt"}}-{{ .Environment.CACHE_VERSION}}
+    - run:
+      name: Installation des dépendances python
+      command:
+       python3 -m venv venv
+       . venv/bin/active
+       pip install -r requirements/dev.txt
+    - save_cache:
+      keys: deps-{{ checksum "requirements/dev.txt"}}-{{ .Environment.CACHE_VERSION }}
+      path:
+       - "venv"
+ flask_tests:
+  docker:
+   - image: circleci/python:3.6-buster-node-browsers
+     environment:
+       DATABASE_URL: postgresql://denis:denis@localhost:5432/postgres
+       CONDUIT_SECRET: 'something-really-secret'
+       FLASK_APP: autoapp.py
+       FLASK_DEBUG: 1
+   - image: circleci/postgres:9.6.9-alpine
+     environment:
+       POSTGRES_USER: denis
+       POSTGRES_PASSWORD: denis
+       POSTGRES_BD: postgres
+  steps:
+    - checkout
+    - restore_cache:
+         key: deps-{{ checksum "requirements/dev.txt"}}-{{ .Environment.CACHE_VERSION }}
+    - run:
+        name: Attente de postgres
+        command: dockerize -wait tcp://localhost:5432 -timeout 1m
+
   
+
 
 
 
