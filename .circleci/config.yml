@@ -40,7 +40,7 @@ jobs:
       - checkout
       - 
         restore_cache: 
-          key: "deps-{{ checksum \"requirements/dev.txt\"}}-{{ .Environment.CACHE_VERSION }}"
+          key: "deps1-{{ .Branch }}-{{ checksum \"requirements/dev.txt\" }}"
       - 
         run: 
           command: "dockerize -wait tcp://localhost:5432 -timeout 1m"
