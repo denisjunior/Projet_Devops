@@ -4,8 +4,8 @@ workflows:
   jobs:
    - build
    - flask_tests:
-     requires:
-      - build
+      requires:
+       - build
 jobs:
  build:
   docker:
@@ -13,17 +13,19 @@ jobs:
   steps:
     - checkout
     - restore_cahce:
-      key: deps-{{ checksum "requirements/dev.txt"}}-{{ .Environment.CACHE_VERSION}}
+       key: deps-{{ checksum "requirements/dev.txt"}}-{{ .Environment.CACHE_VERSION}}
     - run:
-      name: Installation des dépendances python
-      command:
-       python3 -m venv venv
-       . venv/bin/active
-       pip install -r requirements/dev.txt
+        name: Installation des dépendances python
+        command:
+          python3 -m venv venv
+          . venv/bin/active
+          pip install -r requirements/dev.txt
     - save_cache:
-      keys: deps-{{ checksum "requirements/dev.txt"}}-{{ .Environment.CACHE_VERSION }}
-      path:
-       - "venv"
+       key: deps-{{ checksum "requirements/dev.txt"}}-{{ .Environment.CACHE_VERSION }}
+       paths:
+        - "venv"
+       
+          
  flask_tests:
   docker:
    - image: circleci/python:3.6-buster-node-browsers
@@ -40,7 +42,7 @@ jobs:
   steps:
     - checkout
     - restore_cache:
-         key: deps-{{ checksum "requirements/dev.txt"}}-{{ .Environment.CACHE_VERSION }}
+       key: deps-{{ checksum "requirements/dev.txt"}}-{{ .Environment.CACHE_VERSION }}
     - run:
         name: Attente de postgres
         command: dockerize -wait tcp://localhost:5432 -timeout 1m
