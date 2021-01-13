@@ -3,7 +3,7 @@ jobs:
   build: 
     docker: 
       - 
-        image: "circleci/python:3.6-buster-node-browsers"
+        image: "circleci/python:latest"
     steps: 
       - checkout
       - 
@@ -26,7 +26,7 @@ jobs:
           DATABASE_URL: "postgresql://denis:denis@localhost:5432/postgres?sslmode=disable"
           FLASK_APP: autoapp.py
           FLASK_DEBUG: 1
-        image: "circleci/python:3.6-buster-node-browsers"
+        image: "circleci/python:latest"
       - 
         environment: 
           POSTGRES_BD: postgres
