@@ -51,7 +51,6 @@ jobs:
               flask db upgrade
               flask test
           name: "Tests Flask"
-version: 2
 workflows: 
   test: 
     jobs: 
@@ -60,3 +59,4 @@ workflows:
         flask_tests: 
           requires: 
             - build
+  version: 2
