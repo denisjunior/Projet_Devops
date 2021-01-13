@@ -46,6 +46,14 @@ jobs:
     - run:
         name: Attente de postgres
         command: dockerize -wait tcp://localhost:5432 -timeout 1m
+    - run:
+        name: Tests Flask
+        command: |
+         . venv/bin/activate
+         flask db stamp head
+         flask db migrate
+         flask db upgrade
+         flask test
 
   
 
