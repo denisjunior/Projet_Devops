@@ -26,7 +26,7 @@ jobs:
       - 
         environment: 
           CONDUIT_SECRET: something-really-secret
-          DATABASE_URL: "postgresql://denis:denis@localhost:5432/denis"
+          DATABASE_URL: "postgresql://denis:denis@localhost:5432/postgres"
           FLASK_APP: autoapp.py
           FLASK_DEBUG: 1
         image: "circleci/python:latest"
