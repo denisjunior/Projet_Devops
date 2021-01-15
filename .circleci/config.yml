@@ -3,29 +3,24 @@ workflows:
   build_circleci:
     jobs:
       - build
-      - initialise:
+      - test:
           requires:
             - build
-      - docker-build-and-push:
-          requires:
-            - initialise
-      - back-deploy-heroku:
-          requires:
-            - docker-build-and-push
 
 version: 2
 jobs:
   build:
     docker:
       - image: circleci/python:3.7.4
+    working_directory: ~/repo
     steps:
       - checkout
       - restore_cache:
           keys:
-            - v2-dependencies-{{ checksum "requirements/dev.txt" }}-{{ checksum "requirements/prod.txt" }}
-            - v2-dependencies-
+            - v3-dependencies-{{ checksum "requirements/dev.txt" }}-{{ checksum "requirements/prod.txt" }}
+            - v3-dependencies-
       - run:
-          name: install pyth dependencies
+          name: install dependencies
           command: |
             python3 -m venv venv
             . venv/bin/activate
@@ -37,51 +32,59 @@ jobs:
 
       - save_cache:
           paths:
-            - ./venv
-          key: v2-dependencies-{{ checksum "requirements/dev.txt" }}-{{ checksum "requirements/prod.txt" }}
-  initialise:
+            - venv
+          key: v3-dependencies-{{ checksum "requirements/dev.txt" }}-{{ checksum "requirements/prod.txt" }}
+
+  test:
     docker:
       - image: circleci/python:3.7.4
-        environment:
-          DATABASE_URL: postgresql://myuser:somePwd@localhost:5432/mydb
       - image: postgres:9.6.2-alpine
         environment:
+          POSTGRES_USER: myUser  
+          POSTGRES_PASSOWRD: somePwd 
           POSTGRES_DB: mydb
-          POSTGRES_USER: myuser
-          POSTGRES_PASSWORD: somePwd
+
+    working_directory: ~/repo
+
     steps:
       - checkout
       - restore_cache:
           keys:
-            - v2-dependencies-{{ checksum "requirements/dev.txt" }}-{{ checksum "requirements/prod.txt" }}
-            - v2-dependencies-
+            - v3-dependencies-{{ checksum "requirements/dev.txt" }}-{{ checksum "requirements/prod.txt" }}
+            - v3-dependencies-
       - run:
-          name: flask upgrade
+          name: bd upgrade 
           command: |
             . venv/bin/activate
             sleep 1
             flask db upgrade
           environment:
             CONDUIT_SECRET: 'something-really-secret'
-            FLASK_APP: ./autoapp.py
-            DATABASE_URL: postgresql://myuser:somePwd@localhost:5432/mydb
+            FLASK_APP: /home/circleci/repo/autoapp.py
+            DATABASE_URL: postgresql://myUser:somePwd@localhost:5432/myUser
             FLASK_DEBUG: 1
-            POSTGRES_USER: myuser
+            POSTGRES_USER: myUser
             POSTGRES_DB: mydb
             POSTGRES_PASSWORD: somePwd
             POSTGRES_PORT: 5432
+
       - run:
-          name: flask test
+          name: run tests
           command: |
             . venv/bin/activate
-            sleep 1
+            flask db migrate
             flask test
           environment:
             CONDUIT_SECRET: 'something-really-secret'
-            FLASK_APP: ./autoapp.py
-            DATABASE_URL: postgresql://myuser:somePwd@localhost:5432/mydb
+            FLASK_APP: /home/circleci/repo/autoapp.py
+            DATABASE_URL: postgresql://myUser:somePwd@localhost:5432/myUser
             FLASK_DEBUG: 1
-            POSTGRES_USER: myuser
+            POSTGRES_USER: myUser
             POSTGRES_DB: mydb
             POSTGRES_PASSWORD: somePwd
             POSTGRES_PORT: 5432
+
+      - save_cache:
+          paths:
+            - venv
+          key: v3-dependencies-{{ checksum "requirements/dev.txt" }}-{{ checksum "requirements/prod.txt" }}
