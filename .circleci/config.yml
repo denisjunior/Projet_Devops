@@ -6,12 +6,12 @@ workflows:
       - initialise:
           requires:
             - build
-#      - docker-build-and-push:
-#          requires:
-#            - initialise
-#      - back-deploy-heroku:
-#          requires:
-#            - docker-build-and-push
+      - docker-build-and-push:
+          requires:
+            - initialise
+      - back-deploy-heroku:
+          requires:
+            - docker-build-and-push
     
 version: 2
 jobs:
