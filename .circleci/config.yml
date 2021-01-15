@@ -73,7 +73,7 @@ jobs:
           command: |
             . venv/bin/activate
             flask db migrate
-            flask test
+            flask test  
           environment:
             CONDUIT_SECRET: 'something-really-secret'
             FLASK_APP: /home/circleci/repo/autoapp.py
