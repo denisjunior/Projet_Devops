@@ -61,7 +61,7 @@ jobs:
           environment:
             CONDUIT_SECRET: 'something-really-secret'
             FLASK_APP: /home/circleci/repo/autoapp.py
-            DATABASE_URL: postgresql://myUser:somePwd@localhost:5432/myUser
+            DATABASE_URL: postgresql://myUser:somePwd@localhost:5432/mydb
             FLASK_DEBUG: 1
             POSTGRES_USER: myUser
             POSTGRES_DB: mydb
@@ -77,7 +77,7 @@ jobs:
           environment:
             CONDUIT_SECRET: 'something-really-secret'
             FLASK_APP: /home/circleci/repo/autoapp.py
-            DATABASE_URL: postgresql://myUser:somePwd@localhost:5432/myUser
+            DATABASE_URL: postgresql://myUser:somePwd@localhost:5432/mydb
             FLASK_DEBUG: 1
             POSTGRES_USER: myUser
             POSTGRES_DB: mydb
