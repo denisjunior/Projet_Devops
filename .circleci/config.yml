@@ -1,65 +1,60 @@
---- 
-jobs: 
-  build: 
-    docker: 
-      - 
-        image: "circleci/python:latest"
-    steps: 
-      - checkout
-      - 
-        restore_cache: 
-          key: "deps1-{{ .Branch }}-{{ checksum \"requirements/dev.txt\" }}"
-      - 
-        run: 
-          command: |
-              python3 -m venv venv
-              . venv/bin/activate
-              pip install -r requirements/dev.txt
-          name: "Install Python deps in a venv"
-      - 
-        save_cache: 
-          key: "deps1-{{ .Branch }}-{{ checksum \"requirements/dev.txt\" }}"
-          paths: 
-            - venv
-  flask_tests: 
-    docker: 
-      - 
-        environment: 
-          CONDUIT_SECRET: something-really-secret
-          DATABASE_URL: "postgresql://denis:denis@localhost:5432/postgres"
-          FLASK_APP: autoapp.py
-          FLASK_DEBUG: 1
-        image: "circleci/python:latest"
-      - 
-        environment: 
-          POSTGRES_BD: postgres
-          POSTGRES_PASSWORD: denis
-          POSTGRES_USER: denis
-        image: "circleci/postgres:9.6.9-alpine-ram"
-    steps: 
-      - checkout
-      - 
-        restore_cache: 
-          key: "deps1-{{ .Branch }}-{{ checksum \"requirements/dev.txt\" }}"
-      - 
-        run: 
-          command: "dockerize -wait tcp://localhost:5432 -timeout 1m"
-          name: "Attente de postgres"
-      - 
-        run: 
-          command: |
-              . venv/bin/activate
-              flask db stamp head
-              flask db migrate
-              flask db upgrade
-              flask test
-          name: "Tests Flask"
-workflows: 
-  test: 
-    jobs: 
-      - build
-      - 
-        flask_tests: 
-          requires: 
-            - build
+workflows:
   version: 2
+  build_circleci:
+    jobs:
+      - build
+      - initialise:
+          requires:
+            - build
+      - docker-build-and-push:
+          requires:
+            - initialise
+      - back-deploy-heroku:
+          requires:
+            - docker-build-and-push
+    
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/python:3.7.4
+    steps:
+      - checkout
+      - run:
+          name: install pyth dependencies
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r requirements/dev.txt
+      - save_cache:
+          paths:
+            - ./venv
+          key: v2-dependencies-{{ checksum "requirements/dev.txt" }}
+  initialise:
+    docker:
+      - image: circleci/python:3.7.4
+        environment:
+          DATABASE_URL: postgresql://myuser:somePwd@localhost:5432/mydb
+      - image: circleci/postgres:9.6.5
+        environment:
+          POSTGRES_DB: mydb
+          POSTGRES_USER: myuser
+          POSTGRES_PASSWORD: somePwd
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v2-dependencies-{{ checksum "requirements/dev.txt" }}
+            - v2-dependencies-
+      - run:
+          name: flask upgrade
+          command: |
+            . venv/bin/activate
+            sleep 1
+            flask db upgrade
+      - run:
+          name: flask test
+          command: |
+            . venv/bin/activate
+            sleep 1
+            flask test
