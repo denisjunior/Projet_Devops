@@ -26,10 +26,14 @@ jobs:
             python3 -m venv venv
             . venv/bin/activate
             pip install -r requirements/dev.txt
+          environment:
+            CONDUIT_SECRET: 'something-really-secret'
+            FLASK_APP: /home/circleci/repo/autoapp.py
+            FLASK_DEBUG: 1
       - save_cache:
           paths:
             - ./venv
-          key: v2-dependencies-{{ checksum "requirements/dev.txt" }}
+          key: v2-dependencies-{{ checksum "requirements/dev.txt" }}-{{ checksum "requirements/prod.txt" }}
   initialise:
     docker:
       - image: circleci/python:3.7.4
@@ -44,7 +48,7 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - v2-dependencies-{{ checksum "requirements/dev.txt" }}
+            - v2-dependencies-{{ checksum "requirements/dev.txt" }}-{{ checksum "requirements/prod.txt" }}
             - v2-dependencies-
       - run:
           name: flask upgrade
