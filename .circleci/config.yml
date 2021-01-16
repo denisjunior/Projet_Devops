@@ -1,65 +1,102 @@
---- 
-jobs: 
-  build: 
-    docker: 
-      - 
-        image: "circleci/python:latest"
-    steps: 
-      - checkout
-      - 
-        restore_cache: 
-          key: "deps1-{{ .Branch }}-{{ checksum \"requirements/dev.txt\" }}"
-      - 
-        run: 
-          command: |
-              python3 -m venv venv
-              . venv/bin/activate
-              pip install -r requirements/dev.txt
-          name: "Install Python deps in a venv"
-      - 
-        save_cache: 
-          key: "deps1-{{ .Branch }}-{{ checksum \"requirements/dev.txt\" }}"
-          paths: 
-            - venv
-  flask_tests: 
-    docker: 
-      - 
-        environment: 
-          CONDUIT_SECRET: something-really-secret
-          DATABASE_URL: "postgresql://denis:denis@localhost:5432/postgres"
-          FLASK_APP: autoapp.py
-          FLASK_DEBUG: 1
-        image: "circleci/python:latest"
-      - 
-        environment: 
-          POSTGRES_BD: postgres
-          POSTGRES_PASSWORD: denis
-          POSTGRES_USER: denis
-        image: "circleci/postgres:9.6.9-alpine-ram"
-    steps: 
-      - checkout
-      - 
-        restore_cache: 
-          key: "deps1-{{ .Branch }}-{{ checksum \"requirements/dev.txt\" }}"
-      - 
-        run: 
-          command: "dockerize -wait tcp://localhost:5432 -timeout 1m"
-          name: "Attente de postgres"
-      - 
-        run: 
-          command: |
-              . venv/bin/activate
-              flask db stamp head
-              flask db migrate
-              flask db upgrade
-              flask test
-          name: "Tests Flask"
-workflows: 
-  test: 
-    jobs: 
-      - build
-      - 
-        flask_tests: 
-          requires: 
-            - build
+workflows:
   version: 2
+  build_circleci:
+    jobs:
+      - build
+      - test:
+          requires:
+            - build
+      - back-deploy-heroku:
+          requires:
+            - build
+
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/python:latest
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v3-dependencies-{{ checksum "requirements/dev.txt" }}-{{ checksum "requirements/prod.txt" }}
+            - v3-dependencies-
+      - run:
+          name: install dependencies
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r requirements/dev.txt
+          environment:
+            CONDUIT_SECRET: 'something-really-secret'
+            FLASK_APP: /home/circleci/repo/autoapp.py
+            FLASK_DEBUG: 1
+
+      - save_cache:
+          paths:
+            - venv
+          key: v3-dependencies-{{ checksum "requirements/dev.txt" }}-{{ checksum "requirements/prod.txt" }}
+
+  test:
+    docker:
+      - image: circleci/python:latest
+      - image: postgres:9.6.2-alpine
+        environment:
+          POSTGRES_USER: myUser  
+          POSTGRES_PASSOWRD: somePwd 
+          POSTGRES_DB: mydb
+
+    working_directory: ~/repo
+
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v3-dependencies-{{ checksum "requirements/dev.txt" }}-{{ checksum "requirements/prod.txt" }}
+            - v3-dependencies-
+      - run:
+          name: bd upgrade 
+          command: |
+            . venv/bin/activate
+            sleep 1
+            flask db upgrade
+          environment:
+            CONDUIT_SECRET: 'something-really-secret'
+            FLASK_APP: /home/circleci/repo/autoapp.py
+            DATABASE_URL: postgresql://myUser:somePwd@localhost:5432/mydb
+            FLASK_DEBUG: 1
+            POSTGRES_USER: myUser
+            POSTGRES_DB: mydb
+            POSTGRES_PASSWORD: somePwd
+            POSTGRES_PORT: 5432
+
+      - run:
+          name: run tests
+          command: |
+            . venv/bin/activate
+            flask db migrate
+            flask test  
+          environment:
+            CONDUIT_SECRET: 'something-really-secret'
+            FLASK_APP: /home/circleci/repo/autoapp.py
+            DATABASE_URL: postgresql://myUser:somePwd@localhost:5432/mydb
+            FLASK_DEBUG: 1
+            POSTGRES_USER: myUser
+            POSTGRES_DB: mydb
+            POSTGRES_PASSWORD: somePwd
+            POSTGRES_PORT: 5432
+
+      - save_cache:
+          paths:
+            - venv
+          key: v3-dependencies-{{ checksum "requirements/dev.txt" }}-{{ checksum "requirements/prod.txt" }}
+
+  back-deploy-heroku:
+   docker:
+      - image: buildpack-deps:trusty
+   steps:
+      - checkout
+      - run:
+          name: Heroku Deploy
+          command: git push https://heroku:5f976f6c-4d3d-47f7-b33e-c64757c330f1@git.heroku.com/devospp.git origin/test
