@@ -99,4 +99,4 @@ jobs:
       - checkout
       - run:
           name: Heroku Deploy
-          command: git push https://heroku:5f976f6c-4d3d-47f7-b33e-c64757c330f1@git.heroku.com/morning-mesa-76496.git origin/test
+          command: git push https://heroku:5f976f6c-4d3d-47f7-b33e-c64757c330f1@git.heroku.com/morning-mesa-76496.git origin/main
