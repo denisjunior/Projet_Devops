@@ -121,7 +121,7 @@ jobs:
             CIRCLE_BUILD_NUM: 1
             DOCKER_HUB_EMAIL: hallouma.fahem1@gmail.com
             DOCKER_HUB_USER_ID : 150597dal
-            DOCKER_HUB_PWD : @ssodal1234
+            DOCKER_HUB_PWD : "@ssodal1234"
           command: |
             docker login -e $DOCKER_HUB_EMAIL -u $DOCKER_HUB_USER_ID -p $DOCKER_HUB_PWD
             docker tag app $DOCKER_HUB_USER_ID/devops_backend:$CIRCLE_BUILD_NUM
